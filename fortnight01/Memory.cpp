@@ -6,11 +6,11 @@
 
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
-    (veja a licença, em inglês, abaixo).
+    (veja a licenÃ§a, em inglÃªs, abaixo).
 
     (EN) MIT LICENSE:
 
-    Copyright 2020 André Vital Saúde
+    Copyright 2020 AndrÃ© Vital SaÃºde
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@
 
    ----------------------------------------------------------------------------
 */
-
+//alterando
 #include "Memory.h"
 
 #include <iostream>
@@ -76,7 +76,7 @@ void Memory::loadBinary(string filename)
 }
 
 
-//Escreve arquivo binario em um arquivo legível
+//Escreve arquivo binario em um arquivo legÃ­vel
 #define LINE_SIZE 4
 void Memory::writeBinaryAsText (string basename) {
     string filename = "txt_" + basename + ".txt";
