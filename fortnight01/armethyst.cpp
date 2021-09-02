@@ -32,7 +32,7 @@
 
    ----------------------------------------------------------------------------
 */
-
+//abcd comentandozinho o comentario oooo
 #define MEMORY_SIZE 65536
 #define FILENAME "fpops.o"
 
