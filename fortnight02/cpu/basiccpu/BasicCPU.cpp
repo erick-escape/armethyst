@@ -115,8 +115,13 @@ int BasicCPU::ID()
 			fpOP = false;
 			return decodeDataProcImm();
 			break;
-		// case TODO
 		// x101 Data Processing -- Register on page C4-278
+        case 0x0a000000: // x = 0
+		case 0x1a000000: // x = 1
+			fpOP = false;
+			return decodeDataProcReg();
+			break;
+
 		default:
 			return 1; // instrução não implementada
 	}
@@ -225,9 +230,44 @@ int BasicCPU::decodeDataProcReg() {
 	//		acrescentar um switch no estilo do switch de decodeDataProcImm,
 	//		e implementar APENAS PARA A INSTRUÇÃO A SEGUIR:
 	//				'add w1, w1, w0'
-	//		que aparece na linha 43 de isummation.S e no endereço 0x68
+	//		que aparece na linha 40 de isummation.S e no endereço 0x74
 	//		de txt_isummation.o.txt.
-	
+
+	// instrução não implementada
+
+	int n, m, d,shift,imm6;
+
+	switch (IR & 0xff200000)
+	{
+		case 0x0b000000:
+			if (IR & 0x80000000)
+			{
+				return 1;// variação 64
+			}
+			n = (IR & 0x000003e0) >> 5;
+			A = getW(n);
+
+			m = (IR & 0x001f0000) >> 16;
+			int BW = getW(m);
+			shift = (IR & 0x00c00000) >> 22;
+
+			imm6 = (IR & 0x0000fc00) >> 10;
+            switch (shift)
+            {
+                case 0:
+                    B = BW << imm6; //lsl
+                    break;
+                case 1 :
+                    B = ((unsigned long) BW)>> imm6;//lsr
+                    break;
+                case 2 :
+                    B = ((signed long) BW ) >> imm6;//asr
+                    break;
+                default:
+                    return 1;
+            }
+            return 0;
+	}
 	
 	// instrução não implementada
 	return 1;
@@ -273,6 +313,9 @@ int BasicCPU::EXI()
 		case ALUctrlFlag::SUB:
 			ALUout = A - B;
 			// ATIVIDADE FUTURA: setar flags NCZF
+			return 0;
+		case ALUctrlFlag::ADD:
+			ALUout = A + B;
 			return 0;
 		default:
 			// Controle não implementado
