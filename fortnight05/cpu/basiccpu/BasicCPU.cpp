@@ -127,8 +127,19 @@ int BasicCPU::ID()
 		// implementar o GRUPO A SEGUIR
 		//
 		// 101x Loads and Stores on page C4-237
-
-		
+        case 0x1c000000:
+		case 0x18000000:
+		case 0x0c000000:
+		case 0x08000000:
+			//fpOp = false;
+			return decodeLoadStore();
+			break;
+		case 0x14000000:
+			//fpOp = false;
+			return decodeLoadStore();
+			//fpOp = false;
+			return decodeBranches();
+			break;
 		// ATIVIDADE FUTURA
 		// implementar os demais grupos
 		
@@ -225,6 +236,141 @@ int BasicCPU::decodeBranches() {
  */
 int BasicCPU::decodeLoadStore() {
 	// instrução não implementada
+
+	unsigned int n, d;
+	int imm;
+
+	switch (IR & 0xffc00000)
+	{
+		case 0xb9800000:// LDRSW c6.2.131 immendiate
+			n = (IR & 0x000003e0)>>5;
+				if (n == 31)
+				{
+					A = SP;
+				}else
+				{
+					A = getX(n); // 64 bit
+				}
+
+			B = (IR & 0x003ffc00) >> 8; //immediate
+
+			Rd = &(R[IR & 0x0000001f]);
+
+			ALUctrl = ALUctrlFlag :: ADD;
+
+				MEMctrl = MEMctrlFlag :: READ64;
+
+				WBctrl = WBctrlFlag ::RegWrite;
+
+				MemtoReg = true;
+		return 0;
+
+
+		case 0xB9000000: //STR C6.2.257 Unsigned offset 1135
+		// ler A e B
+            n= (IR & 0X00003E0) >> 5;
+			if (n == 31){
+				A = SP;
+			} else {
+				A = getX(n); //64 bit variante
+			}
+			B = ((IR & 0x003ffc00) >> 10) << 2; //offset = imm12 << scale.scale = size
+
+			d = (IR & 0x0000001F);
+				if (d == 31){
+					Rd = &SP;
+				} else{
+					Rd = &(R[d]);
+				}
+					//atribuindo ALUctrl
+					ALUctrl = ALUctrlFlag::ADD;
+
+					//atribuindo MEMctrl
+					MEMctrl = MEMctrlFlag::WRITE32;
+
+					//atribuindo WBctrl
+					WBctrl = WBctrlFlag::WB_NONE;
+
+			return 0;
+
+
+			//default:
+			//instrução nao implementada
+			//return 1;
+
+	case 0xB9400000: //LDR C6.2.119 Immediate (Unsigned offset) BB6
+	// 32 bits
+        n = (IR & 0x000003E0) >> 5;
+		if (n == 31){
+			A = SP;
+		} else {
+			A = getX(n); // 64 bit variante
+		}
+
+		B = ((IR & 0x003FFC00) >> 10) << 2;
+
+        d = (IR & 0x0000001F);
+		if (d == 31){
+			Rd = &SP;
+		} else {
+			Rd = &(R[d]);
+		}
+
+			// atribuindo ALUctrl
+			ALUctrl = ALUctrlFlag::ADD;
+
+			//atribuindo MEMctrl
+			MEMctrl = MEMctrlFlag::READ32;
+
+			//atribuindo WBctrl
+			WBctrl = WBctrlFlag::RegWrite;
+
+			//atribuir MemtoReg
+			MemtoReg = true;
+
+		return 0;
+
+	}
+
+
+	switch (IR & 0xFFE0FC00) {
+		//1111 1111 1110 0000 1111 1100 0000 0000
+
+        case 0xB8607800: //LDR (Register) C6.2.121. 891
+
+				//ler A e B
+			n = (IR & 0x000003E0) >> 5;
+				if (n == 31){
+					A = SP;
+				} else {
+					A = getX(n); // 64 bit variante
+				}
+
+
+			n = (IR & 0x001F0000) >> 16;
+			if (n ==31){
+				B = SP << 2;
+			} else {
+				B = getX(n) << 2;
+			}
+
+			d = IR & 0x0000001F;
+			Rd = &(R[d]);
+
+					// atribuindo ALUctrl
+					ALUctrl = ALUctrlFlag::ADD;
+
+					//atribuindo MEMctrl
+					MEMctrl = MEMctrlFlag::READ32;
+
+					//atribuindo WBctrl
+					WBctrl = WBctrlFlag::RegWrite;
+
+					//atribuir MemtoReg
+					MemtoReg = true;
+			return 0;
+
+		}
 	return 1;
 }
 
@@ -280,6 +426,10 @@ int BasicCPU::decodeDataProcReg() {
 			
 			// TODO:
 			// implementar informações para os estágios MEM e WB.
+
+			MEMctrl = MEMctrlFlag ::MEM_NONE;
+			WBctrl = WBctrlFlag :: RegWrite;
+			MemtoReg = false;
 
 			return 0;
 	}
@@ -379,8 +529,9 @@ int BasicCPU::EXI()
 		case ALUctrlFlag::SUB:
 			ALUout = A - B;
 			return 0;
-		//case ALUctrlFlag::ADD:
-		// TODO
+		case ALUctrlFlag::ADD:
+            ALUout = A + B;
+            return 0;
 		default:
 			// Controle não implementado
 			return 1;
@@ -444,22 +595,22 @@ int BasicCPU::MEM()
 	// com as chamadas aos métodos corretos que implementam cada caso de acesso
 	// à memória de dados.
 
-	//switch (MEMctrl) {
-	//case MEMctrlFlag::READ32:
-		//MDR = memory->readData32(ALUout);
-		//return 0;
-	//case MEMctrlFlag::WRITE32:
-		//memory->writeData32(ALUout,*Rd);
-		//return 0;
-	//case MEMctrlFlag::READ64:
-		//MDR = memory->readData64(ALUout);
-		//return 0;
-	//case MEMctrlFlag::WRITE64:
-		//memory->writeData64(ALUout,*Rd);
-		//return 0;
-	//default:
-		//return 0;
-	//}
+	switch (MEMctrl) {
+	case MEMctrlFlag::READ32:
+		MDR = memory->readData32(ALUout);
+		return 0;
+    case MEMctrlFlag::WRITE32:
+		memory->writeData32(ALUout,*Rd);
+		return 0;
+	case MEMctrlFlag::READ64:
+		MDR = memory->readData64(ALUout);
+		return 0;
+	case MEMctrlFlag::WRITE64:
+		memory->writeData64(ALUout,*Rd);
+		return 0;
+	default:
+		return 0;
+	}
 
 	return 1;
 }
@@ -479,20 +630,20 @@ int BasicCPU::WB()
 	// com as atribuições corretas do registrador destino, quando houver, ou
 	// return 0 no caso WBctrlFlag::WB_NONE.
 	
-    //switch (WBctrl) {
-        //case WBctrlFlag::WB_NONE:
-            //return 0;
-        //case WBctrlFlag::RegWrite:
-            //if (MemtoReg) {
-                //*Rd = MDR;
-            //} else {
-                //*Rd = ALUout;
-            //}
-            //return 0;
-        //default:
-             ////não implementado
+    switch (WBctrl) {
+        case WBctrlFlag::WB_NONE:
+            return 0;
+        case WBctrlFlag::RegWrite:
+            if (MemtoReg) {
+                *Rd = MDR;
+            } else {
+                *Rd = ALUout;
+            }
+            return 0;
+        default:
+            //não implementado
             return 1;
-    //}
+    }
 }
 
 
